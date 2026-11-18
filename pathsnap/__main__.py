@@ -4,13 +4,13 @@ import argparse
 import json
 from pathlib import Path
 
-from .candidates import UNMATCHED, generate_candidates
-from .exports import (
+from pathsnap.data_preprocessing.candidates import UNMATCHED, generate_candidates
+from pathsnap.data_preprocessing.exports import (
     CANDIDATE_FIELDS, LABEL_FIELDS, PREDICTION_FIELDS, baseline_counts, baseline_rates,
     candidate_rows, label_rows, prediction_rows, write_csv,
 )
-from .reference import align_reference
-from .trip import load_reference_route, load_trip
+from pathsnap.data_preprocessing.reference import align_reference
+from pathsnap.data_preprocessing.trip import load_reference_route, load_trip
 
 
 def main() -> None:
@@ -50,7 +50,7 @@ def main() -> None:
             metrics["labeled_observations"] = counts["labeled_observations"]
             metrics["reference_max_distance_m"] = args.reference_max_distance_m
         if args.map:
-            from .visualize import save_map
+            from pathsnap.visualization.maps import save_map
 
             save_map(args.output / "map.html", trip, candidates, route)
 

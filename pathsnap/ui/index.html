@@ -3,77 +3,122 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Evaluate PathSnap route predictions and inspect reconstructed GPS trips.">
-  <title>PathSnap Evaluator</title>
-  <link rel="stylesheet" href="/leaflet/leaflet.css">
+  <meta name="description" content="Evaluate PathSnap road classifiers and inspect HMM reconstructed routes on Google Maps.">
+  <title>PathSnap Evaluation Studio</title>
   <link rel="stylesheet" href="/ui/app.css">
-  <script src="/leaflet/leaflet.js" defer></script>
   <script src="/ui/app.js" defer></script>
 </head>
 <body>
   <header class="site-header">
     <div class="frame header-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>PathSnap</div>
-      <span class="connection" id="connection" data-state="waiting"><i></i><span id="connection-text">Connecting</span></span>
+      <a class="brand" href="/" aria-label="PathSnap home">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>PathSnap</span>
+      </a>
+      <div class="header-actions">
+        <a class="api-link" href="/docs" target="_blank" rel="noopener">API docs <span aria-hidden="true">↗</span></a>
+        <span class="connection" id="connection" data-state="waiting"><i></i><span id="connection-text">Connecting</span></span>
+      </div>
     </div>
   </header>
 
   <main class="frame">
-    <div class="page-title">
+    <section class="hero" aria-labelledby="page-title">
       <div>
-        <h1>Route evaluator</h1>
-        <p>Run a trip and compare the classifier with the decoded route.</p>
+        <p class="eyebrow">Evaluation dashboard</p>
+        <h1 id="page-title">Route reconstruction,<br><em>made visible.</em></h1>
+        <p class="hero-copy">Inspect raw GPS readings, road candidates, classifier choices and the final HMM decoded route for every evaluation trip.</p>
       </div>
-      <a class="api-link" href="/openapi.json" target="_blank" rel="noopener">API schema <span aria-hidden="true">↗</span></a>
-    </div>
-
-    <div class="workspace">
-      <section class="panel controls-panel" aria-labelledby="controls-title">
-        <h2 id="controls-title">Trip selection</h2>
-        <form id="predict-form">
-          <label for="trip-select">Evaluator trip</label>
-          <select id="trip-select" disabled><option>Loading trips</option></select>
-          <button class="primary" type="submit" id="predict-button" disabled>Run prediction</button>
-        </form>
+      <form class="trip-form" id="predict-form">
+        <label for="trip-select">Evaluation trip</label>
+        <div class="trip-actions">
+          <select id="trip-select" disabled><option>Loading trips…</option></select>
+          <button class="primary" type="submit" id="predict-button" disabled>
+            <span>Run evaluation</span><span aria-hidden="true">→</span>
+          </button>
+        </div>
         <p class="request-status" id="request-status" role="status" aria-live="polite">Loading available trips…</p>
-      </section>
+      </form>
+    </section>
 
-      <section class="panel map-panel" aria-labelledby="map-title">
-        <div class="map-heading">
-          <div><h2 id="map-title">Route map</h2><p id="map-detail">Waiting for a trip</p></div>
-          <button type="button" class="secondary" id="fit-button" disabled>Fit route</button>
+    <section class="metrics" aria-label="Evaluation metrics">
+      <article class="metric metric-featured">
+        <div class="metric-label"><span>HMM decoder accuracy</span><i class="dot decoded"></i></div>
+        <div class="metric-main"><strong id="decoded-score">—</strong><span class="delta" id="score-delta" hidden></span></div>
+        <p id="score-detail">Accuracy appears after evaluation.</p>
+      </article>
+      <article class="metric">
+        <div class="metric-label"><span>Classifier Top-1</span><i class="dot classifier"></i></div>
+        <strong id="classifier-score">—</strong>
+        <p>Raw per-reading prediction</p>
+      </article>
+      <article class="metric">
+        <div class="metric-label"><span>Directed reachability</span><i class="dot reachability"></i></div>
+        <strong id="reachability">—</strong>
+        <p>Transitions supported by the graph</p>
+      </article>
+      <article class="metric">
+        <div class="metric-label"><span>Matched readings</span><i class="dot matched"></i></div>
+        <strong id="matched">—</strong>
+        <p>GPS points with a road match</p>
+      </article>
+      <article class="metric">
+        <div class="metric-label"><span>Decoded segments</span><i class="dot segments"></i></div>
+        <strong id="segments">—</strong>
+        <p>Road arcs in the HMM path</p>
+      </article>
+      <article class="metric">
+        <div class="metric-label"><span>Inference time</span><i class="dot timing"></i></div>
+        <strong id="inference">—</strong>
+        <p>End-to-end model runtime</p>
+      </article>
+    </section>
+
+    <section class="map-card" aria-labelledby="map-title">
+      <div class="map-header">
+        <div>
+          <div class="section-kicker"><span>Live route inspection</span><span class="google-badge">Google Maps</span></div>
+          <h2 id="map-title">Model decisions on the road</h2>
+          <p id="map-detail">Waiting for an evaluation trip</p>
         </div>
-        <div class="map-stage">
-          <div id="map" role="region" aria-label="Interactive route map"></div>
-          <div class="map-state" id="map-state">Waiting for the first prediction…</div>
-        </div>
-        <p class="basemap-status" id="basemap-status" role="status" hidden>Street map tiles could not load. Route layers are still available.</p>
+        <button type="button" class="secondary" id="fit-button" disabled><span aria-hidden="true">⌖</span> Fit route</button>
+      </div>
+
+      <div class="map-stage">
+        <div id="map" role="region" aria-label="Interactive Google map showing evaluation routes"></div>
+        <div class="map-state" id="map-state">Loading map and evaluation data…</div>
+      </div>
+
+      <div class="map-footer">
         <div class="layers" aria-label="Map layers">
-          <label><input type="checkbox" id="street-map" checked>Street map</label>
-          <label><input type="checkbox" data-layer="decoded" checked disabled><i class="swatch decoded"></i>Decoded route</label>
-          <label><input type="checkbox" data-layer="classifier" disabled><i class="swatch classifier"></i>Classifier only</label>
-          <label><input type="checkbox" data-layer="gps" checked disabled><i class="swatch gps"></i>GPS readings</label>
+          <label><input type="checkbox" data-layer="gps" checked disabled><i class="swatch gps"></i>GPS points</label>
           <label><input type="checkbox" data-layer="roads" checked disabled><i class="swatch roads"></i>Candidate roads</label>
+          <label><input type="checkbox" data-layer="classifier" disabled><i class="swatch classifier"></i>Classifier Top-1</label>
+          <label><input type="checkbox" data-layer="decoded" checked disabled><i class="swatch decoded"></i>HMM route</label>
         </div>
-      </section>
+        <p class="map-note" id="map-note">Map layers are generated by the live inference response.</p>
+      </div>
+    </section>
 
-      <section class="panel score-panel" aria-labelledby="score-title">
-        <h2 id="score-title">Evaluation</h2>
-        <div class="headline-score">
-          <p>Decoded Top-1</p>
-          <div class="score-line"><strong id="decoded-score">—</strong><span class="delta" id="score-delta" hidden></span></div>
-          <p class="score-detail" id="score-detail">Accuracy appears after prediction.</p>
-        </div>
-        <dl class="score-table">
-          <div><dt>Classifier Top-1</dt><dd id="classifier-score">—</dd></div>
-          <div><dt>Directed reachability</dt><dd id="reachability">—</dd></div>
-          <div><dt>Matched readings</dt><dd id="matched">—</dd></div>
-          <div><dt>Decoded segments</dt><dd id="segments">—</dd></div>
-          <div><dt>Inference time</dt><dd id="inference">—</dd></div>
-        </dl>
-      </section>
-    </div>
-    <noscript><p>Enable JavaScript to display the evaluator interface. The <a href="/openapi.json">API schema</a> is also available.</p></noscript>
+    <section class="reading-card" aria-labelledby="reading-title">
+      <div>
+        <p class="eyebrow">Reading-level evaluation</p>
+        <h2 id="reading-title">What the model resolved</h2>
+        <p>These counts use the reference labels bundled with the selected evaluation trip.</p>
+      </div>
+      <dl class="reading-stats">
+        <div><dt>Total observations</dt><dd id="observations">—</dd></div>
+        <div><dt>Labeled observations</dt><dd id="labeled">—</dd></div>
+        <div><dt>Classifier correct</dt><dd id="classifier-correct">—</dd></div>
+        <div><dt>Decoder correct</dt><dd id="decoder-correct">—</dd></div>
+      </dl>
+    </section>
+
+    <noscript><p class="noscript">Enable JavaScript to use the evaluator. The <a href="/docs">API documentation</a> is available separately.</p></noscript>
   </main>
+
+  <footer class="site-footer">
+    <div class="frame"><span>PathSnap evaluation studio</span><span>Classifier → HMM → route</span></div>
+  </footer>
 </body>
 </html>

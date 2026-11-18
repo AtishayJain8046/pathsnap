@@ -1,4 +1,10 @@
-numpy>=1.26
-scipy>=1.11
-folium>=0.16
+# Match the saved classifier's recorded training dependencies.
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.7.2
+joblib==1.6.0
+threadpoolctl==3.7.0
+folium==0.20.0
 matplotlib>=3.8
+fastapi==0.163.2
+uvicorn==0.54.0
