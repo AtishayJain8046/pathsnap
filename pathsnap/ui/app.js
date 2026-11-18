@@ -7,11 +7,21 @@ const runButton = byId("predict-button");
 const fitButton = byId("fit-button");
 const requestStatus = byId("request-status");
 const mapState = byId("map-state");
+const streetMap = byId("street-map");
+const basemapStatus = byId("basemap-status");
 const checkboxes = [...document.querySelectorAll("[data-layer]")];
 const number = new Intl.NumberFormat("en-US");
-const map = L.map("map", {preferCanvas: true, attributionControl: false}).setView([0, 0], 2);
+const map = L.map("map", {preferCanvas: true}).setView([0, 0], 2);
 map.zoomControl.setPosition("topright");
 L.control.scale({imperial: false, position: "bottomleft"}).addTo(map);
+const basemap = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+});
+let tileError = false;
+basemap.on("loading", () => { tileError = false; });
+basemap.on("tileerror", () => { tileError = true; });
+basemap.on("load", () => { basemapStatus.hidden = !tileError; });
 
 const colors = {roads: "#8d9a93", gps: "#47769b", classifier: "#a55018", decoded: "#117453"};
 const panes = {roads: 390, gps: 400, classifier: 410, decoded: 420};
@@ -58,6 +68,15 @@ function setLayer(checkbox) {
   else map.removeLayer(layer);
 }
 
+function updateBasemap() {
+  if (streetMap.checked && bounds?.isValid()) {
+    if (!map.hasLayer(basemap)) basemap.addTo(map);
+  } else {
+    map.removeLayer(basemap);
+    basemapStatus.hidden = true;
+  }
+}
+
 function fitRoute() {
   if (bounds?.isValid()) map.fitBounds(bounds, {padding: [30, 30], maxZoom: 18});
 }
@@ -91,6 +110,7 @@ function renderMap(data) {
   requestAnimationFrame(() => {
     map.invalidateSize();
     fitRoute();
+    updateBasemap();
   });
 }
 
@@ -157,5 +177,6 @@ async function start() {
 
 form.addEventListener("submit", (event) => { event.preventDefault(); void runTrip(); });
 fitButton.addEventListener("click", fitRoute);
+streetMap.addEventListener("change", updateBasemap);
 for (const checkbox of checkboxes) checkbox.addEventListener("change", () => setLayer(checkbox));
 void start();

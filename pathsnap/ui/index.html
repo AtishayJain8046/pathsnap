@@ -47,7 +47,9 @@
           <div id="map" role="region" aria-label="Interactive route map"></div>
           <div class="map-state" id="map-state">Waiting for the first prediction…</div>
         </div>
+        <p class="basemap-status" id="basemap-status" role="status" hidden>Street map tiles could not load. Route layers are still available.</p>
         <div class="layers" aria-label="Map layers">
+          <label><input type="checkbox" id="street-map" checked>Street map</label>
           <label><input type="checkbox" data-layer="decoded" checked disabled><i class="swatch decoded"></i>Decoded route</label>
           <label><input type="checkbox" data-layer="classifier" disabled><i class="swatch classifier"></i>Classifier only</label>
           <label><input type="checkbox" data-layer="gps" checked disabled><i class="swatch gps"></i>GPS readings</label>

@@ -20,7 +20,7 @@ For a single-laptop rehearsal, use `--host 127.0.0.1` and open [the local evalua
 
 Connect both laptops to the same trusted Wi-Fi network or hotspot. On Laptop 1, use `ipconfig` to find the IPv4 address of the connected adapter. On Laptop 2, open `http://LAPTOP_1_IPV4:8000/` with that address substituted. If Windows Firewall prompts for access, allow the server on the private network used for the demo.
 
-Select any listed trip and click **Run prediction**. Toggle **Classifier only**, **Decoded route**, **GPS readings**, or **Candidate roads** to inspect the map. **Fit route** restores the initial view. The accuracy panel shows the classifier and decoded Top-1 scores, the number of readings evaluated, and the fraction of plausible directed transitions. The main evaluator page works over the local network without external map tiles.
+Select any listed trip and click **Run prediction**. Toggle **Classifier only**, **Decoded route**, **GPS readings**, or **Candidate roads** to inspect the map. **Fit route** restores the initial view. The accuracy panel shows the classifier and decoded Top-1 scores, the number of readings evaluated, and the fraction of plausible directed transitions. **Street map** is on by default and loads OpenStreetMap tiles in Laptop 2’s browser. The tiles need internet access on Laptop 2. If the demo network is offline, turn off **Street map** to use the local grid with the GPS and route overlays. Predictions and scores still work over the local network.
 
 ## API
 
