@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "settings": {
+    "radius_m": 50.0,
+    "candidate_limit": 8,
+    "heading_max_gap_s": 10.0,
+    "heading_min_motion_m": 3.0,
+    "heading_window_observations": 4
+  },
+  "feature_names": [
+    "distance_m",
+    "arc_fraction",
+    "previous_heading_cosine",
+    "candidate_rank",
+    "distance_above_nearest_m",
+    "candidate_count",
+    "arc_length_m",
+    "distance_to_start_m",
+    "distance_to_end_m",
+    "next_heading_cosine",
+    "window_heading_cosine",
+    "previous_speed_mps",
+    "next_speed_mps",
+    "previous_heading_available",
+    "next_heading_available",
+    "window_heading_available",
+    "previous_excess_to_arc_m",
+    "next_excess_to_arc_m",
+    "incoming_degree",
+    "outgoing_degree"
+  ],
+  "reference_alignment_max_distance_m": 50.0,
+  "reference_alignment_used_only_for": [
+    "training labels",
+    "evaluation labels"
+  ],
+  "missing_value_strategy": "Median imputation learned on the fit partition",
+  "feature_scaling": "StandardScaler for Logistic Regression and Gaussian Naive Bayes",
+  "candidate_probability": "P(match) for each candidate from the fitted binary classifier",
+  "log_emission": "Log of clipped match odds normalized across the candidates for each observation"
+}
