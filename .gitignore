@@ -13,6 +13,7 @@ __pycache__/
 /PathSnap_student_materials/
 /Problem Statement.mp4
 /data/
+/outputs/
 *.track
 *.nodes
 *.arcs
