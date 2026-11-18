@@ -27,3 +27,10 @@ The runner tries nine combinations of transition scale and emission weight on th
 `summary.csv` compares observation Top-1, strict directed adjacency, directed reachability, and candidate Macro F1 after assigning exactly one top arc per observation. That F1 uses hard assignments. It differs from the binary classifier's probability-threshold F1. Reachability can count a valid transition through intermediate road arcs. The existing strict directed-adjacency metric requires equal arcs or shared directed endpoints.
 
 To export an offline comparison map, install Folium with `python -m pip install -r requirements.txt` and add `--map-trip 00000000` to the experiment command. It uses the student-test trip's GPS, reference arcs, classifier choices, and reconstructed Viterbi segments.
+
+
+## Comparison plots
+
+[Classifier and decoder comparison](results/hmm/hmm_comparison.png) shows observation Top-1, directed adjacency, and directed reachability for student test and evaluator test. [Evaluator trip scores](results/hmm/evaluator_trips_top1.png) shows the Top-1 change for each of the 10 evaluator trips.
+
+To regenerate the plots from the committed comparison CSVs, install the plotting dependencies from `requirements.txt` and run `python results/hmm/plot_results.py`.
