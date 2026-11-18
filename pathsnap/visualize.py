@@ -36,9 +36,7 @@ def _roads_layer(
     )
 
 
-def save_map(
-    path: Path, trip: Trip, candidates: Candidates, reference_route: NDArray | None = None,
-) -> None:
+def _new_trip_map(trip: Trip) -> folium.Map:
     latlon = trip.gps_lonlat[:, ::-1]
     map_view = folium.Map(
         location=latlon.mean(axis=0).tolist(),
@@ -48,6 +46,13 @@ def save_map(
     )
     map_view.default_js = []
     map_view.default_css = []
+    return map_view
+
+
+def save_map(
+    path: Path, trip: Trip, candidates: Candidates, reference_route: NDArray | None = None,
+) -> None:
+    map_view = _new_trip_map(trip)
     available = np.unique(candidates.arc_ids[candidates.arc_ids != UNMATCHED])
     predictions = candidates.arc_ids[:, 0]
     matched = np.unique(predictions[predictions != UNMATCHED])
@@ -59,7 +64,23 @@ def save_map(
         _roads_layer(trip, reference_route, "Reference route (green)", "#16a34a", 7).add_to(map_view)
     if len(matched):
         _roads_layer(trip, matched, "Nearest road predictions (orange)", "#ea580c", 4).add_to(map_view)
+    _finish_trip_map(path, trip, map_view)
 
+
+def save_decoded_map(path, trip, classifier_arcs, decoded_routes, reference_route):
+    map_view = _new_trip_map(trip)
+    classifier = np.unique(classifier_arcs[classifier_arcs != UNMATCHED])
+    decoded = np.asarray([arc for route in decoded_routes for arc in route], dtype=int)
+    _roads_layer(trip, reference_route, "Reference route (green)", "#16a34a", 7).add_to(map_view)
+    if len(classifier):
+        _roads_layer(trip, classifier, "Classifier-only predictions (orange)", "#ea580c", 4, visible=False).add_to(map_view)
+    if len(decoded):
+        _roads_layer(trip, decoded, "HMM/Viterbi route (purple)", "#7c3aed", 4).add_to(map_view)
+    _finish_trip_map(path, trip, map_view)
+
+
+def _finish_trip_map(path: Path, trip: Trip, map_view: folium.Map) -> None:
+    latlon = trip.gps_lonlat[:, ::-1]
     folium.GeoJson(
         {"type": "MultiPoint", "coordinates": trip.gps_lonlat.tolist()},
         name="GPS observations (blue)",
