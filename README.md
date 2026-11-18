@@ -14,7 +14,15 @@ python -m pathsnap "Student folder/train/00000002" \
   --output outputs/00000002 --evaluate --map
 ```
 
-Open `outputs/00000002/map.html` to view the GPS readings, candidate roads, nearest-road predictions, and reference route. The orange layer draws the selected road segments, so jumps between them remain visible. The map uses an online basemap.
+Open `outputs/00000002/map.html` in your browser to view the GPS readings, candidate roads, nearest-road predictions, and reference route. Pan, zoom, and toggle the layers in the upper right. The map uses the supplied road network as its geographic context and works offline.
+
+If your preview app blocks local HTML files, serve the output on your own laptop:
+
+```sh
+python -m http.server 8765 --bind 127.0.0.1 --directory outputs/00000002
+```
+
+Then open [the sample map on localhost](http://127.0.0.1:8765/map.html).
 
 Each run writes `predictions.csv` with one row per GPS reading and `candidates.csv` with one row per nearby arc. Candidate features include the distance in meters, fractional position along the arc, and agreement with the GPS heading. An empty heading means the GPS movement is too short, the time gap is too large, or the arc has no direction. An empty predicted arc means no road was found within the search radius. The defaults are 50 m and up to eight candidates per reading. Use `--radius-m` and `--limit` to configure them.
 
