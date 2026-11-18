@@ -1,0 +1,4 @@
+-r requirements-person2.txt
+fastapi==0.163.2
+uvicorn==0.54.0
+folium==0.20.0
