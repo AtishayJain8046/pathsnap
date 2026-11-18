@@ -5,18 +5,20 @@ import hashlib
 import json
 import logging
 import re
+from collections import OrderedDict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Lock
 from time import perf_counter
+from typing import Literal
 from zipfile import ZipFile
 
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -31,6 +33,16 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 RAW_INPUTS = {"track", "nodes", "arcs"}
 TRIP_MEMBER = re.compile(r"(?:[a-zA-Z0-9_-]+/)?([0-9]{8})/\1\.(track|nodes|arcs|route)")
 LOG = logging.getLogger("uvicorn.error")
+MAP_CACHE_TRIPS = 10
+MAP_HEADERS = {
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": (
+        "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; "
+        "img-src data: https://tile.openstreetmap.org; frame-ancestors 'self'; "
+        "base-uri 'none'; form-action 'none'"
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -70,6 +82,8 @@ class Prediction(BaseModel):
     directed_reachability: float | None
     score: TripScore | None
     layers: MapLayers
+    map_html: str | None = None
+    map_url: str | None = None
 
 
 def catalog(archive_path):
@@ -109,8 +123,17 @@ class Evaluator:
                 raise ValueError("The saved classifier does not match the decoder configuration")
         self.scorer = CandidateScorer(settings.model)
         self.inference_lock = Lock()
+        self.map_lock = Lock()
+        self.map_documents: OrderedDict[str, str] = OrderedDict()
 
-    def predict(self, trip_id):
+    def map_document(self, trip_id):
+        with self.map_lock:
+            html = self.map_documents.get(trip_id)
+            if html is not None:
+                self.map_documents.move_to_end(trip_id)
+            return html
+
+    def predict(self, trip_id, *, include_map=False, map_format="html"):
         files = self.trips[trip_id]
         with self.inference_lock, TemporaryDirectory(prefix="pathsnap-trip-") as directory, ZipFile(self.archive) as archive:
             path = Path(directory) / trip_id
@@ -156,6 +179,20 @@ class Evaluator:
                 classifier=trip.nodes_lonlat[trip.arcs[classifier]].tolist(), decoded=route_coordinates,
             ),
         )
+        if include_map:
+            from .visualize import render_evaluator_map
+
+            serve_document = map_format == "url"
+            html = render_evaluator_map(trip, lattice.classifier_arcs, routes, online_streets=serve_document)
+            if serve_document:
+                with self.map_lock:
+                    self.map_documents[trip_id] = html
+                    self.map_documents.move_to_end(trip_id)
+                    if len(self.map_documents) > MAP_CACHE_TRIPS:
+                        self.map_documents.popitem(last=False)
+                response.map_url = f"/maps/{trip_id}"
+            else:
+                response.map_html = html
         LOG.info("trip=%s observations=%d segments=%d inference_ms=%.1f decoded_top1=%s",
                  trip_id, response.observations, response.decoded_segments, inference_ms,
                  f"{score.decoded_top1:.4f}" if score and score.decoded_top1 is not None else "unavailable")
@@ -185,12 +222,20 @@ def create_app(settings):
     def trips(request: Request):
         return {"trip_ids": list(request.app.state.evaluator.trips)}
 
-    @app.post("/predict", response_model=Prediction)
-    def predict(body: PredictRequest, request: Request):
+    @app.post("/predict", response_model=Prediction, response_model_exclude_unset=True)
+    def predict(body: PredictRequest, request: Request, include_map: bool = False,
+                map_format: Literal["html", "url"] = "html"):
         evaluator = request.app.state.evaluator
         if body.trip_id not in evaluator.trips:
             raise HTTPException(status_code=404, detail="Trip is not available")
-        return evaluator.predict(body.trip_id)
+        return evaluator.predict(body.trip_id, include_map=include_map, map_format=map_format)
+
+    @app.get("/maps/{trip_id}", response_class=HTMLResponse)
+    def map_document(trip_id: str, request: Request):
+        html = request.app.state.evaluator.map_document(trip_id)
+        if html is None:
+            raise HTTPException(status_code=404, detail="Run a prediction to generate this map.")
+        return HTMLResponse(html, headers=MAP_HEADERS)
 
     return app
 
