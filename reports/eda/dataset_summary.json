@@ -1,0 +1,40 @@
+{
+  "train": {
+    "trips": 80,
+    "gps_observations": 208417,
+    "aligned_observations": 185227,
+    "candidate_rows": 1084804,
+    "labeled_candidate_rows": 1059686,
+    "candidate_free_observations": 18230,
+    "candidate_misses_on_aligned_observations": 1344,
+    "nearest_correct": 103655,
+    "gps_intervals": 208337,
+    "one_second_intervals": 201048,
+    "gaps_over_10_seconds": 590,
+    "nodes": 1933485,
+    "directed_arcs": 3876904,
+    "zero_length_arcs": 100,
+    "raw_nonfinite_values": 0,
+    "max_gap_seconds": 153064.0,
+    "max_gap_trip": "00000090"
+  },
+  "student_test": {
+    "trips": 10,
+    "gps_observations": 19160,
+    "aligned_observations": 19133,
+    "candidate_rows": 113649,
+    "labeled_candidate_rows": 113589,
+    "candidate_free_observations": 0,
+    "candidate_misses_on_aligned_observations": 54,
+    "nearest_correct": 10278,
+    "gps_intervals": 19150,
+    "one_second_intervals": 18886,
+    "gaps_over_10_seconds": 27,
+    "nodes": 90689,
+    "directed_arcs": 185041,
+    "zero_length_arcs": 6,
+    "raw_nonfinite_values": 0,
+    "max_gap_seconds": 210.0,
+    "max_gap_trip": "00000065"
+  }
+}
