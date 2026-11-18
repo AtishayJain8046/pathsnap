@@ -1,0 +1,19 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+
+# Organizer-provided materials and local datasets
+/Student folder/
+/PathSnap_student_materials/
+/Problem Statement.mp4
+/data/
+*.track
+*.nodes
+*.arcs
+*.route
