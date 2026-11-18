@@ -34,6 +34,14 @@ Use `train/` for training and trip-grouped cross-validation and `student_test/` 
 
 ## Prepare the data for training
 
+The [prepared dataset ZIP](datasets/pathsnap-prepared.zip) contains the derived tables for the 80 training and 10 student-test trips, along with the baseline metrics and dataset profile. After cloning the repository, extract it with:
+
+```sh
+unzip datasets/pathsnap-prepared.zip -d outputs/prepared-from-github
+```
+
+To regenerate the tables from the organizer files and create the optional local Folium map, run:
+
 ```sh
 python -m pathsnap.prepare "Student folder" --output outputs/prepared --map-trip 00000002
 ```
