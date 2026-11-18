@@ -14,6 +14,8 @@ __pycache__/
 /Problem Statement.mp4
 /data/
 /outputs/
+/frontend/node_modules/
+/frontend/.next/
 *.track
 *.nodes
 *.arcs

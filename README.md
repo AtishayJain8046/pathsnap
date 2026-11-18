@@ -61,6 +61,8 @@ For training, join candidates to labels within a split on `(trip_id, observation
 
 ## Dataset audit and baseline
 
+The [data exploration report](reports/eda/EDA_and_Features.md) documents preprocessing and includes missing-value, GPS trajectory, road-network, and Folium figures.
+
 | Split | Trips | GPS readings | Reference coverage | Candidate miss rate | Nearest-road top-1 |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Training | 80 | 208,417 | 88.87% | 0.73% | 55.95% |

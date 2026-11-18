@@ -1,4 +1,4 @@
-"use strict";
+import {FIT_ROUTE_MESSAGE, jsonRequest, number, percent, predictTrip, tripLabel as label} from "./shared.mjs";
 
 const byId = (id) => document.getElementById(id);
 const form = byId("predict-form");
@@ -7,33 +7,7 @@ const runButton = byId("predict-button");
 const fitButton = byId("fit-button");
 const requestStatus = byId("request-status");
 const mapState = byId("map-state");
-const streetMap = byId("street-map");
-const basemapStatus = byId("basemap-status");
-const checkboxes = [...document.querySelectorAll("[data-layer]")];
-const number = new Intl.NumberFormat("en-US");
-const map = L.map("map", {preferCanvas: true}).setView([0, 0], 2);
-map.zoomControl.setPosition("topright");
-L.control.scale({imperial: false, position: "bottomleft"}).addTo(map);
-const basemap = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-});
-let tileError = false;
-basemap.on("loading", () => { tileError = false; });
-basemap.on("tileerror", () => { tileError = true; });
-basemap.on("load", () => { basemapStatus.hidden = !tileError; });
-
-const colors = {roads: "#8d9a93", gps: "#47769b", classifier: "#a55018", decoded: "#117453"};
-const panes = {roads: 390, gps: 400, classifier: 410, decoded: 420};
-for (const [name, zIndex] of Object.entries(panes)) {
-  map.createPane(name).style.zIndex = zIndex;
-}
-let layers = {};
-let bounds = null;
-
-const coordinates = ([lon, lat]) => [lat, lon];
-const percent = (value) => value === null || value === undefined ? "—" : `${(value * 100).toFixed(2)}%`;
-const label = (id) => `Trip ${id}`;
+const mapFrame = byId("route-map");
 
 function setConnection(text, state) {
   byId("connection-text").textContent = text;
@@ -45,73 +19,12 @@ function setStatus(text, state = "ready") {
   requestStatus.dataset.state = state;
 }
 
-async function jsonRequest(path, options = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 90000);
-  try {
-    const response = await fetch(path, {...options, signal: controller.signal});
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      const detail = typeof payload?.detail === "string" ? payload.detail : `Request failed (${response.status}).`;
-      throw new Error(detail);
-    }
-    return await response.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-function setLayer(checkbox) {
-  const layer = layers[checkbox.dataset.layer];
-  if (!layer) return;
-  if (checkbox.checked) layer.addTo(map);
-  else map.removeLayer(layer);
-}
-
-function updateBasemap() {
-  if (streetMap.checked && bounds?.isValid()) {
-    if (!map.hasLayer(basemap)) basemap.addTo(map);
-  } else {
-    map.removeLayer(basemap);
-    basemapStatus.hidden = true;
-  }
-}
-
-function fitRoute() {
-  if (bounds?.isValid()) map.fitBounds(bounds, {padding: [30, 30], maxZoom: 18});
-}
-
 function renderMap(data) {
-  for (const layer of Object.values(layers)) map.removeLayer(layer);
-  const {gps, roads, classifier, decoded} = data.layers;
-  const points = gps.map(coordinates);
-  const line = (paths, name, weight, opacity) => L.polyline(
-    paths.map((path) => path.map(coordinates)),
-    {pane: name, color: colors[name], weight, opacity, interactive: false},
-  );
-  layers = {
-    roads: line(roads, "roads", 2, .45),
-    gps: L.layerGroup(points.map((point) => L.circleMarker(point, {
-      pane: "gps", radius: 2, color: colors.gps, stroke: false, fillOpacity: .75, interactive: false,
-    }))),
-    classifier: line(classifier, "classifier", 3, .8),
-    decoded: line(decoded, "decoded", 5, .9),
-  };
-  for (const checkbox of checkboxes) {
-    checkbox.disabled = data.layers[checkbox.dataset.layer].length === 0;
-    if (!checkbox.disabled) setLayer(checkbox);
-  }
-  bounds = L.latLngBounds(points);
-  for (const path of decoded) for (const point of path) bounds.extend(coordinates(point));
-  fitButton.disabled = !bounds.isValid();
-  mapState.hidden = bounds.isValid();
-  if (!mapState.hidden) mapState.textContent = "This trip has no usable map coordinates.";
+  fitButton.disabled = true;
+  mapFrame.hidden = false;
+  mapFrame.src = data.map_url;
+  mapState.hidden = true;
   byId("map-detail").textContent = `${label(data.trip_id)} · ${number.format(data.observations)} GPS readings`;
-  requestAnimationFrame(() => {
-    map.invalidateSize();
-    fitRoute();
-    updateBasemap();
-  });
 }
 
 function renderScores(data) {
@@ -143,9 +56,7 @@ async function runTrip() {
   setStatus(`Scoring ${label(tripId).toLowerCase()}…`);
   if (!mapState.hidden) mapState.textContent = `Decoding ${label(tripId).toLowerCase()}…`;
   try {
-    const data = await jsonRequest("/predict", {
-      method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({trip_id: tripId}),
-    });
+    const data = await predictTrip("", tripId);
     renderMap(data);
     renderScores(data);
     setStatus(`${label(data.trip_id)} scored successfully.`);
@@ -176,7 +87,6 @@ async function start() {
 }
 
 form.addEventListener("submit", (event) => { event.preventDefault(); void runTrip(); });
-fitButton.addEventListener("click", fitRoute);
-streetMap.addEventListener("change", updateBasemap);
-for (const checkbox of checkboxes) checkbox.addEventListener("change", () => setLayer(checkbox));
+mapFrame.addEventListener("load", () => { fitButton.disabled = !mapFrame.hasAttribute("src"); });
+fitButton.addEventListener("click", () => mapFrame.contentWindow?.postMessage(FIT_ROUTE_MESSAGE, "*"));
 void start();

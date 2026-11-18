@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Evaluate PathSnap route predictions and inspect reconstructed GPS trips.">
   <title>PathSnap Evaluator</title>
-  <link rel="stylesheet" href="/leaflet/leaflet.css">
   <link rel="stylesheet" href="/ui/app.css">
-  <script src="/leaflet/leaflet.js" defer></script>
-  <script src="/ui/app.js" defer></script>
+  <script type="module" src="/ui/app.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -40,20 +38,12 @@
 
       <section class="panel map-panel" aria-labelledby="map-title">
         <div class="map-heading">
-          <div><h2 id="map-title">Route map</h2><p id="map-detail">Waiting for a trip</p></div>
+          <div><h2 id="map-title">Folium route map</h2><p id="map-detail">Waiting for a trip</p></div>
           <button type="button" class="secondary" id="fit-button" disabled>Fit route</button>
         </div>
         <div class="map-stage">
-          <div id="map" role="region" aria-label="Interactive route map"></div>
+          <iframe id="route-map" title="Interactive Folium route map" hidden></iframe>
           <div class="map-state" id="map-state">Waiting for the first prediction…</div>
-        </div>
-        <p class="basemap-status" id="basemap-status" role="status" hidden>Street map tiles could not load. Route layers are still available.</p>
-        <div class="layers" aria-label="Map layers">
-          <label><input type="checkbox" id="street-map" checked>Street map</label>
-          <label><input type="checkbox" data-layer="decoded" checked disabled><i class="swatch decoded"></i>Decoded route</label>
-          <label><input type="checkbox" data-layer="classifier" disabled><i class="swatch classifier"></i>Classifier only</label>
-          <label><input type="checkbox" data-layer="gps" checked disabled><i class="swatch gps"></i>GPS readings</label>
-          <label><input type="checkbox" data-layer="roads" checked disabled><i class="swatch roads"></i>Candidate roads</label>
         </div>
       </section>
 
