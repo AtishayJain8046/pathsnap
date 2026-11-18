@@ -73,3 +73,7 @@ The alignment audit flags geometric alternatives within 3 m of the assigned arc'
 Training trip `00000054` is the largest coverage outlier. Only 2,794 of 19,313 readings had a road candidate within 50 m, and only 2,073 received an aligned label. The pipeline retains all observation rows and marks the missing predictions or labels as empty. Candidate miss and top-1 accuracy use labeled observations as their denominator, including labeled observations with no candidates.
 
 See the [four-person work plan](TEAM_PLAN.md) for ownership, handoffs, and demo milestones. Use a branch per workstream and review changes that affect shared interfaces before merging into `main`.
+
+## Model experiments
+
+See [Person 2 model experiments](PERSON2.md) for training, tuning, and decoder handoff instructions. The [model comparison](results/person2/RESULTS.md) summarizes the run.

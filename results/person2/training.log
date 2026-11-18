@@ -1,0 +1,28 @@
+Preparing 80 training trips
+Training data ready: 1,059,686 labeled candidate rows. Starting grouped CV.
+logistic_regression: grouped CV Macro F1 0.90946
+gaussian_naive_bayes: grouped CV Macro F1 0.86009
+decision_tree: grouped CV Macro F1 0.92625
+extra_trees: grouped CV Macro F1 0.93025
+hist_gradient_boosting: grouped CV Macro F1 0.93196
+Selected hist_gradient_boosting for Bayesian tuning using training CV.
+Bayesian trial 01/12: Macro F1 0.93205 {'max_iter': 102, 'max_leaf_nodes': 54, 'learning_rate': 0.163932793568343, 'min_samples_leaf': 22, 'l2_regularization': 0.14375519209842563}
+Bayesian trial 02/12: Macro F1 0.93103 {'max_iter': 123, 'max_leaf_nodes': 24, 'learning_rate': 0.04253827868079, 'min_samples_leaf': 76, 'l2_regularization': 5.884477026371518}
+Bayesian trial 03/12: Macro F1 0.93239 {'max_iter': 137, 'max_leaf_nodes': 44, 'learning_rate': 0.10723346948512423, 'min_samples_leaf': 53, 'l2_regularization': 1.2000856416473067}
+Bayesian trial 04/12: Macro F1 0.93164 {'max_iter': 74, 'max_leaf_nodes': 34, 'learning_rate': 0.07254866235608912, 'min_samples_leaf': 97, 'l2_regularization': 0.02573551392635989}
+Bayesian trial 05/12: Macro F1 0.93227 {'max_iter': 132, 'max_leaf_nodes': 55, 'learning_rate': 0.12213933872730791, 'min_samples_leaf': 47, 'l2_regularization': 0.34483062875909964}
+Bayesian trial 06/12: Macro F1 0.93174 {'max_iter': 135, 'max_leaf_nodes': 45, 'learning_rate': 0.16357484559260907, 'min_samples_leaf': 35, 'l2_regularization': 3.541823206124193}
+Bayesian trial 07/12: Macro F1 0.93248 {'max_iter': 149, 'max_leaf_nodes': 51, 'learning_rate': 0.0863392067636556, 'min_samples_leaf': 67, 'l2_regularization': 0.5338784615553275}
+Bayesian trial 08/12: Macro F1 0.93209 {'max_iter': 135, 'max_leaf_nodes': 49, 'learning_rate': 0.10527087113345268, 'min_samples_leaf': 77, 'l2_regularization': 0.37604914879523854}
+Bayesian trial 09/12: Macro F1 0.93261 {'max_iter': 138, 'max_leaf_nodes': 53, 'learning_rate': 0.07387129527644448, 'min_samples_leaf': 37, 'l2_regularization': 0.7441492888126995}
+Bayesian trial 10/12: Macro F1 0.93226 {'max_iter': 148, 'max_leaf_nodes': 58, 'learning_rate': 0.05000009985903025, 'min_samples_leaf': 55, 'l2_regularization': 1.0162744990393857}
+Bayesian trial 11/12: Macro F1 0.93244 {'max_iter': 140, 'max_leaf_nodes': 48, 'learning_rate': 0.06811813888882358, 'min_samples_leaf': 41, 'l2_regularization': 0.072539903542341}
+Bayesian trial 12/12: Macro F1 0.93222 {'max_iter': 150, 'max_leaf_nodes': 32, 'learning_rate': 0.08022531712820118, 'min_samples_leaf': 35, 'l2_regularization': 0.2176274557622668}
+Preparing 10 student-test trips and evaluating the fixed configurations
+logistic_regression: student-test Top-1 0.86714
+gaussian_naive_bayes: student-test Top-1 0.83322
+decision_tree: student-test Top-1 0.88920
+extra_trees: student-test Top-1 0.88177
+hist_gradient_boosting: student-test Top-1 0.89176
+hist_gradient_boosting_tuned: student-test Top-1 0.89259
+nearest_road: student-test Top-1 0.53719
