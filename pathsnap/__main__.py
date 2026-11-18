@@ -1,67 +1,16 @@
 """Run the nearest-road baseline and export reusable candidate features."""
 
 import argparse
-import csv
 import json
 from pathlib import Path
 
-import numpy as np
-from numpy.typing import NDArray
-
-from .candidates import Candidates, UNMATCHED, generate_candidates
+from .candidates import UNMATCHED, generate_candidates
+from .exports import (
+    CANDIDATE_FIELDS, LABEL_FIELDS, PREDICTION_FIELDS, baseline_counts, baseline_rates,
+    candidate_rows, label_rows, prediction_rows, write_csv,
+)
 from .reference import align_reference
-from .trip import Trip, load_reference_route, load_trip
-
-
-def _write_predictions(output: Path, trip: Trip, candidates: Candidates) -> None:
-    with (output / "predictions.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(("trip_id", "observation_index", "timestamp_s", "predicted_arc_id", "distance_m"))
-        predictions = zip(trip.timestamp_s, candidates.arc_ids[:, 0], candidates.distance_m[:, 0])
-        for index, (timestamp, arc_id, distance) in enumerate(predictions):
-            matched = arc_id != UNMATCHED
-            writer.writerow((
-                trip.trip_id, index, timestamp, arc_id if matched else "", distance if matched else "",
-            ))
-
-
-def _write_candidates(output: Path, trip: Trip, candidates: Candidates) -> None:
-    with (output / "candidates.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow((
-            "trip_id", "observation_index", "timestamp_s", "arc_id",
-            "distance_m", "arc_fraction", "heading_cosine",
-        ))
-        for index, rank in zip(*np.where(candidates.arc_ids != UNMATCHED)):
-            heading = candidates.heading_cosine[index, rank]
-            writer.writerow((
-                trip.trip_id, index, trip.timestamp_s[index], candidates.arc_ids[index, rank],
-                candidates.distance_m[index, rank], candidates.arc_fraction[index, rank],
-                heading if np.isfinite(heading) else "",
-            ))
-
-
-def _evaluate(
-    output: Path, trip: Trip, candidates: Candidates, route: NDArray, max_distance_m: float,
-) -> dict[str, int | float | None]:
-    alignment = align_reference(trip, route, max_distance_m=max_distance_m)
-    with (output / "labels.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow(("trip_id", "observation_index", "reference_arc_id", "reference_distance_m"))
-        for index, (arc_id, distance) in enumerate(zip(alignment.arc_ids, alignment.distance_m)):
-            writer.writerow((trip.trip_id, index, arc_id if arc_id != UNMATCHED else "", distance))
-
-    labeled = alignment.arc_ids != UNMATCHED
-    labeled_count = int(labeled.sum())
-    candidate_hit = (candidates.arc_ids[labeled] == alignment.arc_ids[labeled, None]).any(axis=1)
-    predicted = candidates.arc_ids[labeled, 0]
-    return {
-        "labeled_observations": labeled_count,
-        "reference_coverage": labeled_count / len(labeled),
-        "reference_max_distance_m": max_distance_m,
-        "candidate_miss_rate": float((~candidate_hit).mean()) if labeled_count else None,
-        "top1_accuracy": float((predicted == alignment.arc_ids[labeled]).mean()) if labeled_count else None,
-    }
+from .trip import load_reference_route, load_trip
 
 
 def main() -> None:
@@ -84,8 +33,8 @@ def main() -> None:
         route = load_reference_route(args.trip_directory, len(trip.arcs)) if args.evaluate else None
 
         args.output.mkdir(parents=True, exist_ok=True)
-        _write_predictions(args.output, trip, candidates)
-        _write_candidates(args.output, trip, candidates)
+        write_csv(args.output / "predictions.csv", PREDICTION_FIELDS, prediction_rows(trip, candidates))
+        write_csv(args.output / "candidates.csv", CANDIDATE_FIELDS, candidate_rows(trip, candidates))
         metrics = {
             "trip_id": trip.trip_id,
             "observations": len(trip.gps_xy),
@@ -94,7 +43,12 @@ def main() -> None:
             "matched_observations": int((candidates.arc_ids[:, 0] != UNMATCHED).sum()),
         }
         if route is not None:
-            metrics.update(_evaluate(args.output, trip, candidates, route, args.reference_max_distance_m))
+            alignment = align_reference(trip, route, max_distance_m=args.reference_max_distance_m)
+            write_csv(args.output / "labels.csv", LABEL_FIELDS, label_rows(trip, alignment))
+            counts = baseline_counts(candidates, alignment)
+            metrics.update(baseline_rates(counts))
+            metrics["labeled_observations"] = counts["labeled_observations"]
+            metrics["reference_max_distance_m"] = args.reference_max_distance_m
         if args.map:
             from .visualize import save_map
 

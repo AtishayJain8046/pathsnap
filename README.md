@@ -2,6 +2,8 @@
 
 PathSnap matches noisy GPS readings to a directed road network. The current baseline searches for nearby roads and chooses the closest arc for each reading. Its candidate features and local evaluation outputs support the next stages of classifier training, HMM/Viterbi decoding, and the two-laptop demo.
 
+Person 1's data pipeline is complete and verified on the supplied 80 training and 10 student-test trips. Model training, HMM/Viterbi decoding, and the two-laptop API and UI are the remaining workstreams.
+
 ## Getting started
 
 Keep the organizer's files locally under `Student folder/`. From the repository root, run:
@@ -30,6 +32,36 @@ Each run writes `predictions.csv` with one row per GPS reading and `candidates.c
 
 Use `train/` for training and trip-grouped cross-validation and `student_test/` for development comparisons. Keep reserved evaluator inputs and reference routes on the backend laptop for the final demo.
 
-With the default settings, the nearest-road baseline reached 53.72% top-1 accuracy across the 10 student-test trips. Reference labels covered 99.86% of observations, and the aligned arc was missing from 0.28% of candidate lists for those labeled readings. These figures pool observations across trips.
+## Prepare the data for training
+
+```sh
+python -m pathsnap.prepare "Student folder" --output outputs/prepared --map-trip 00000002
+```
+
+Choose a new output directory for each batch run. The command processes `train` and `student_test` separately and writes:
+
+| Output | Contents |
+| --- | --- |
+| `{split}/candidates.csv` | One row per candidate arc, sorted by trip, observation, and distance. |
+| `{split}/labels.csv` | One row per GPS observation, with an empty reference arc when the alignment is beyond the distance threshold. |
+| `{split}/predictions.csv` | One nearest-road prediction per observation. |
+| `{split}/trip_summary.csv` | File sizes, GPS gaps, road-network connectivity, alignment audit flags, and scores per trip. |
+| `metrics.json` and `dataset_profile.png` | Split totals and a comparison of the two splits. |
+| `{split}/map.html` | An offline Folium map for the optional `--map-trip`. |
+
+For training, join candidates to labels within a split on `(trip_id, observation_index)`. A candidate is positive when its `arc_id` equals the nonempty `reference_arc_id`. Keep unlabeled readings out of supervised training. Keep labeled readings with no correct candidate in end-to-end accuracy and candidate miss counts. Use the geometry columns as features, and group validation by `trip_id`. Treat arc IDs as trip-local identifiers and fit missing-heading handling on training folds.
+
+## Dataset audit and baseline
+
+| Split | Trips | GPS readings | Reference coverage | Candidate miss rate | Nearest-road top-1 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Training | 80 | 208,417 | 88.87% | 0.73% | 55.95% |
+| Student test | 10 | 19,160 | 99.86% | 0.28% | 53.72% |
+
+All 90 trips passed the file, coordinate, node-index, and timestamp checks. About 96.5% of training intervals and 98.6% of student-test intervals were one second. The longest training gap was 153,064 s on trip `00000090`. The graph audit found 100 zero-length arcs in training and six in student test, plus 13 discontinuities between different consecutive reference arcs in training and one in student test.
+
+The alignment audit flags geometric alternatives within 3 m of the assigned arc's point-to-road distance. It counts junctions with diverging directions, nearby parallel arcs, and exact reverse-direction arcs separately. Training trip `00000042` had 828 junction flags. Trip `00000092` had 2,302 parallel flags and 257 labels on arcs repeated in its reference route. Flags identify observations worth inspecting and can overlap. The reference alignment preserves traversal order but uses distance cues, so these labels remain estimates.
+
+Training trip `00000054` is the largest coverage outlier. Only 2,794 of 19,313 readings had a road candidate within 50 m, and only 2,073 received an aligned label. The pipeline retains all observation rows and marks the missing predictions or labels as empty. Candidate miss and top-1 accuracy use labeled observations as their denominator, including labeled observations with no candidates.
 
 See the [four-person work plan](TEAM_PLAN.md) for ownership, handoffs, and demo milestones. Use a branch per workstream and review changes that affect shared interfaces before merging into `main`.
