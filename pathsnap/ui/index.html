@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Evaluate PathSnap route predictions and inspect reconstructed GPS trips.">
+  <title>PathSnap Evaluator</title>
+  <link rel="stylesheet" href="/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/ui/app.css">
+  <script src="/leaflet/leaflet.js" defer></script>
+  <script src="/ui/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="frame header-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>PathSnap</div>
+      <span class="connection" id="connection" data-state="waiting"><i></i><span id="connection-text">Connecting</span></span>
+    </div>
+  </header>
+
+  <main class="frame">
+    <div class="page-title">
+      <div>
+        <h1>Route evaluator</h1>
+        <p>Run a trip and compare the classifier with the decoded route.</p>
+      </div>
+      <a class="api-link" href="/openapi.json" target="_blank" rel="noopener">API schema <span aria-hidden="true">↗</span></a>
+    </div>
+
+    <div class="workspace">
+      <section class="panel controls-panel" aria-labelledby="controls-title">
+        <h2 id="controls-title">Trip selection</h2>
+        <form id="predict-form">
+          <label for="trip-select">Evaluator trip</label>
+          <select id="trip-select" disabled><option>Loading trips</option></select>
+          <button class="primary" type="submit" id="predict-button" disabled>Run prediction</button>
+        </form>
+        <p class="request-status" id="request-status" role="status" aria-live="polite">Loading available trips…</p>
+      </section>
+
+      <section class="panel map-panel" aria-labelledby="map-title">
+        <div class="map-heading">
+          <div><h2 id="map-title">Route map</h2><p id="map-detail">Waiting for a trip</p></div>
+          <button type="button" class="secondary" id="fit-button" disabled>Fit route</button>
+        </div>
+        <div class="map-stage">
+          <div id="map" role="region" aria-label="Interactive route map"></div>
+          <div class="map-state" id="map-state">Waiting for the first prediction…</div>
+        </div>
+        <div class="layers" aria-label="Map layers">
+          <label><input type="checkbox" data-layer="decoded" checked disabled><i class="swatch decoded"></i>Decoded route</label>
+          <label><input type="checkbox" data-layer="classifier" disabled><i class="swatch classifier"></i>Classifier only</label>
+          <label><input type="checkbox" data-layer="gps" checked disabled><i class="swatch gps"></i>GPS readings</label>
+          <label><input type="checkbox" data-layer="roads" checked disabled><i class="swatch roads"></i>Candidate roads</label>
+        </div>
+      </section>
+
+      <section class="panel score-panel" aria-labelledby="score-title">
+        <h2 id="score-title">Evaluation</h2>
+        <div class="headline-score">
+          <p>Decoded Top-1</p>
+          <div class="score-line"><strong id="decoded-score">—</strong><span class="delta" id="score-delta" hidden></span></div>
+          <p class="score-detail" id="score-detail">Accuracy appears after prediction.</p>
+        </div>
+        <dl class="score-table">
+          <div><dt>Classifier Top-1</dt><dd id="classifier-score">—</dd></div>
+          <div><dt>Directed reachability</dt><dd id="reachability">—</dd></div>
+          <div><dt>Matched readings</dt><dd id="matched">—</dd></div>
+          <div><dt>Decoded segments</dt><dd id="segments">—</dd></div>
+          <div><dt>Inference time</dt><dd id="inference">—</dd></div>
+        </dl>
+      </section>
+    </div>
+    <noscript><p>Enable JavaScript to display the evaluator interface. The <a href="/openapi.json">API schema</a> is also available.</p></noscript>
+  </main>
+</body>
+</html>

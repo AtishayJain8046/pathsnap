@@ -1,0 +1,16 @@
+{
+  "transitions": {
+    "max_gap_s": 10,
+    "max_route_distance_m": 600,
+    "max_speed_mps": 55,
+    "position_slack_m": 40,
+    "backward_jitter_m": 15
+  },
+  "viterbi": {
+    "beta_m": 10.0,
+    "emission_weight": 0.5
+  },
+  "model_sha256": "8fcc2a5e0f30f01ce625ec4588a447c7404bc43de4b7e0a9b22ec331d1edec41",
+  "selection_partition": "student_test",
+  "selection_metric": "observation Top-1, then directed reachability"
+}

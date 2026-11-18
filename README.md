@@ -77,3 +77,7 @@ See the [four-person work plan](TEAM_PLAN.md) for ownership, handoffs, and demo 
 ## Model experiments
 
 See [Person 2 model experiments](PERSON2.md) for training, tuning, and decoder handoff instructions. The [model comparison](results/person2/RESULTS.md) summarizes the run.
+
+## Evaluator demo
+
+See [Deployment](DEPLOYMENT.md) for running the FastAPI server and evaluator interface on two laptops. [HMM and Viterbi decoding](HMM.md) documents route reconstruction and comparison maps.
